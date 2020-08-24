@@ -7,7 +7,7 @@ import traceback
 from dateutil.relativedelta import *
 import mechanize
 import urllib
-import cookielib
+import http.cookiejar
 from lxml import html
 
 _NUM_PAT = re.compile(r'\d+\.*')
@@ -217,7 +217,7 @@ class SBIcomm:
         return "//table/tr/td/table" + path
 
     def _add_url_param(self, url, params):
-        return url + '?' + urllib.urlencode(params)
+        return url + '?' + urllib.parse.urlencode(params)
     
     def __init__(self, username, password,
                  proxy=None, proxy_user=None, proxy_password=None):
@@ -248,7 +248,7 @@ class SBIcomm:
             br.set_proxies(self._proxy)
             br.add_proxy_password(self._proxy_user, self._proxy_password)
 
-        cj = cookielib.LWPCookieJar()
+        cj = http.cookiejar.LWPCookieJar()
         br.set_cookiejar(cj)
         br.addheaders = [('User-agent', 'Chrome')]
         #br.set_debug_http(True)
@@ -305,8 +305,8 @@ class SBIcomm:
             return date, (start_price, end_price, max_price, min_price, volume,
                           gain_loss, gain_loss / (end_price - gain_loss))
         except:
-            print traceback.format_exc()
-            print "Cannot Get Value! %s" % code
+            print(traceback.format_exc())
+            print("Cannot Get Value! %s" % code)
             return datetime.date.today(), None
 
     def get_market_index(self, index_name='nk225'):
@@ -355,8 +355,8 @@ class SBIcomm:
             return (start_price, end_price, max_price, min_price,
                     gain_loss, gain_loss / (end_price - gain_loss))
         except:
-            print traceback.format_exc()
-            print "Cannot Get Value! %s" % index_name
+            print(traceback.format_exc())
+            print("Cannot Get Value! %s" % index_name)
             return (None, None, None, None, None, None)
 
     def get_nikkei_avg(self):
@@ -429,8 +429,8 @@ class SBIcomm:
             records["diff_ratio"] = _extract_plus_minus_num(l[9].text)
             records["balance_ratio"] = eval(_extract_num(l[10].text))
         except:
-            print traceback.format_exc()
-            print "Cannot Get Value! %s" % code
+            print(traceback.format_exc())
+            print("Cannot Get Value! %s" % code)
         return records
 
     def buy_order(self, code, quantity=None, price=None,
@@ -495,7 +495,7 @@ class SBIcomm:
             tds = path_list[0].xpath("descendant::td")
             return {'code': code, 'number': int(_extract_num(tds[3].text)), 'state': tds[1].text}
         except:
-            raise ValueError, "Cannot get info %s!" % order_num
+            raise ValueError("Cannot get info %s!" % order_num)
 
     def get_purchase_margin(self, wday_step=0):
         """
@@ -554,7 +554,7 @@ class SBIcomm:
             day = calc_workday(today, limit)
             br["limit"] = [day.strftime("%Y/%m/%d")]
         else:
-            raise ValueError, "Cannot setting 6 later working day!"
+            raise ValueError("Cannot setting 6 later working day!")
         br["sasinari_kbn"] = [order]
 
     def _confirm(self, br):
@@ -572,9 +572,9 @@ class SBIcomm:
         br.select_form(nr=0)
         try:
             req = br.click(type="submit", nr=0)
-            print "Submitting Order..."
+            print("Submitting Order...")
         except:
-            raise RuntimeError, "Cannot Order!"
+            raise RuntimeError("Cannot Order!")
 
         for _ in range(5):
             try:
@@ -585,7 +585,7 @@ class SBIcomm:
                 return path_list[0].attrib['value']
             except:
                 error_msg = u"処理がタイムアウトしました。"
-        raise ValueError, error_msg
+        raise ValueError(error_msg)
 
     def _init_open(self, page):
         """
@@ -609,5 +609,5 @@ if __name__ == "__main__":
     username = raw_input("username: ")
     password = getpass.getpass("password: ")
     sbi = SBIcomm(username, password)
-    print sbi.get_value("6758")
+    print(sbi.get_value("6758"))
     sbi.buy_order("6752", 100, 614, inv=True, trigger_price=612)  # 買い注文
